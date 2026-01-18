@@ -62,22 +62,22 @@ public class JUnit5TestUnitFinder implements TestUnitFinder {
 
     @Override
     public List<TestUnit> findTestUnits(Class<?> clazz, TestUnitExecutionListener executionListener) {
-        if(clazz.getEnclosingClass() != null) {
+        if (clazz.getEnclosingClass() != null) {
             return emptyList();
         }
 
         List<Filter> filters = new ArrayList<>(2);
         try {
             List<String> excludedGroups = filterEmptyStrings(testGroupConfig.getExcludedGroups());
-            if(!excludedGroups.isEmpty()) {
+            if (!excludedGroups.isEmpty()) {
                 filters.add(TagFilter.excludeTags(excludedGroups));
             }
 
             List<String> includedGroups = filterEmptyStrings(testGroupConfig.getIncludedGroups());
-            if(!includedGroups.isEmpty()) {
+            if (!includedGroups.isEmpty()) {
                 filters.add(TagFilter.includeTags(includedGroups));
             }
-        } catch(PreconditionViolationException e) {
+        } catch (PreconditionViolationException e) {
             throw new IllegalArgumentException("Error creating tag filter", e);
         }
 
@@ -127,12 +127,34 @@ public class JUnit5TestUnitFinder implements TestUnitFinder {
                 if (includedTestMethods != null && !includedTestMethods.isEmpty()
                         && testIdentifier.getSource().isPresent()
                         && testIdentifier.getSource().get() instanceof MethodSource
-                        && !includedTestMethods.contains(((MethodSource)testIdentifier.getSource().get()).getMethodName())) {
+                        && !contains_test(includedTestMethods, testIdentifier)
+
+                ) {
+
                     return;
                 }
                 l.executionStarted(new Description(testIdentifier.getUniqueId(), testClass));
                 identifiers.add(testIdentifier);
             }
+        }
+
+        public boolean contains_test(Collection<String> includedTestMethods, TestIdentifier testIdentifier) {
+            return includedTestMethods.stream().anyMatch(test -> {
+                if (!testIdentifier.getSource().isPresent()) {
+                    return false;
+                }
+                String classname = ((MethodSource) testIdentifier.getSource().get()).getClassName();
+                String methodname = ((MethodSource) testIdentifier.getSource().get()).getMethodName();
+                if (test.contains("::")) {
+                    String[] s = test.split("::");
+                    String included_classname = s[0];
+                    String included_methodname = s[1];
+
+                    return classname.equals(included_classname) && included_methodname.equals(methodname);
+                } else {
+                    return ((MethodSource) testIdentifier.getSource().get()).getMethodName().equals(test);
+                }
+            });
         }
 
 

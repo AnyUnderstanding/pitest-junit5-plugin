@@ -42,6 +42,7 @@ public class JUnit5TestUnit extends AbstractTestUnit implements ExecutedInDiscov
     public JUnit5TestUnit(Class<?> testClass, TestIdentifier testIdentifier) {
         super(new Description(testIdentifier.getUniqueId(), testClass));
         this.testClass = testClass;
+
         this.testIdentifier = testIdentifier;
     }
 
